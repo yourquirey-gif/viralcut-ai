@@ -12,6 +12,10 @@ Requirements
 Install and run
 ---------------
 
+On Windows 10/11, first install Python 3.10+ and FFmpeg, then double-click setup-windows.bat once. After setup, use start-windows.bat whenever you want to run the local engine.
+
+Manual setup:
+
     python -m venv .venv
     # Windows PowerShell: .venv\\Scripts\\Activate.ps1
     # macOS/Linux: source .venv/bin/activate
