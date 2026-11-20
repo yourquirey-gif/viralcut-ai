@@ -114,7 +114,7 @@ def capture_worker(job_id: str, url: str, output_dir: Path) -> None:
             return
         media_url = stream.stdout.strip().splitlines()[0]
         pattern = str(output_dir / "segment-%Y%m%d-%H%M%S.mp4")
-        command = [ffmpeg, "-hide_banner", "-loglevel", "warning", "-i", media_url, "-map", "0", "-c", "copy", "-f", "segment", "-segment_time", "30", "-reset_timestamps", "1", "-strftime", "1", pattern]
+        command = [ffmpeg, "-hide_banner", "-loglevel", "warning", "-i", media_url, "-map", "0:v:0", "-map", "0:a?", "-c", "copy", "-f", "segment", "-segment_time", "30", "-reset_timestamps", "1", "-strftime", "1", pattern]
         update_job(job_id, "capturing")
         process = subprocess.Popen(command, stdout=subprocess.DEVNULL, stderr=subprocess.PIPE, text=True)
         with LOCK:
