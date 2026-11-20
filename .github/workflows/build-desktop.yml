@@ -1,0 +1,37 @@
+name: Build Windows Desktop Installer
+
+on:
+  push:
+    branches: ["main"]
+    paths:
+      - "desktop-app/**"
+      - "engine/**"
+      - ".github/workflows/build-desktop.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: desktop-app/package-lock.json
+      - name: Install desktop dependencies
+        working-directory: desktop-app
+        run: npm install
+      - name: Build Windows installer
+        working-directory: desktop-app
+        run: npm run dist
+      - name: Upload Windows installer
+        uses: actions/upload-artifact@v4
+        with:
+          name: ViralCut-Windows-Installer
+          path: desktop-app/dist/*.exe
+          if-no-files-found: error
+          retention-days: 14
