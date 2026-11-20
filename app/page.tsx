@@ -17,7 +17,7 @@ export default function Home() {
  const [engine,setEngine]=useState<{status:string;tools?:{yt_dlp:string|null;ffmpeg:string|null}}|null>(null);
  const [job,setJob]=useState<{id:string;status:string;error?:string|null}|null>(null);
  const [starting,setStarting]=useState(false);
- function continueWithUrl(){ if(!url.trim()){setError("Paste a YouTube Live URL to continue.");return;} if(!validYouTubeUrl(url)){setError("Enter a valid YouTube video or live URL.");return;} setError("");setModal(true); }
+ function continueWithUrl(){ if(!url.trim()){setError("Paste a YouTube Live URL to continue.");return;} if(!validYouTubeUrl(url)){setError("Enter a valid YouTube Live URL.");return;} setError("");setModal(true); }
  const notify=(s:string)=>setToast(s);
  useEffect(()=>{
   let alive=true;
