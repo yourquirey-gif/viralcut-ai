@@ -20,6 +20,13 @@ Install and run
 
 Health check: http://127.0.0.1:8765/health
 
+For a deployed web dashboard, add its exact origin to the local engine allowlist before opening the site. PowerShell example:
+
+    $env:VIRALCUT_ALLOWED_ORIGINS = "https://your-site.example"
+    python -m uvicorn app:app --host 127.0.0.1 --port 8765
+
+Keep the service bound to 127.0.0.1. Do not use a wildcard CORS origin or expose the engine publicly.
+
 API
 ---
 - GET /health — engine and dependency availability.
