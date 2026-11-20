@@ -13,7 +13,7 @@ A local-first YouTube livestream-to-short-form clipping workspace. The only vide
 - Python + FastAPI — local processing agent in `engine/`
 - yt-dlp — inspect and resolve active YouTube livestreams
 - FFmpeg — record rolling 30-second MP4 segments
-- SQLite — local capture-job metadata
+- SQLite — local capture-job metadata\n- faster-whisper — optional local CPU speech transcription and transparent candidate ranking
 
 ## Run the web workspace
 
@@ -23,7 +23,7 @@ A local-first YouTube livestream-to-short-form clipping workspace. The only vide
 Open http://localhost:3000.
 
 ## Run the local engine
-See `engine/README.md`. The engine runs on 127.0.0.1:8765 and exposes a health endpoint, capture-job creation, status polling and stop requests. Install Python, yt-dlp and FFmpeg first.
+See `engine/README.md`. The engine runs on 127.0.0.1:8765 and exposes a health endpoint, capture-job creation, status polling and stop requests. Install Python 3.10+, yt-dlp and FFmpeg first. `engine/setup-windows.bat` also installs faster-whisper; its base model downloads on first analysis.
 
 For a deployed website, configure the exact website origin using VIRALCUT_ALLOWED_ORIGINS as described in engine/README.md. Do not expose the local engine to the public internet.
 
