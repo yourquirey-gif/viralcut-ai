@@ -33,12 +33,16 @@ For a deployed website, configure the exact website origin using VIRALCUT_ALLOWE
 - Browser-to-local-engine health check.
 - Local API to inspect an active livestream, resolve media through yt-dlp and record 30-second FFmpeg segments.
 - Capture status polling and stop request from the dashboard.
+- Persistent activity timeline for stream checks, recording, reconnects and saved segments.
+- Download links for safely closed 30-second capture segments.
+- Automatic reconnect attempts (up to five) after stream interruptions, with a fresh yt-dlp media URL resolution.
+- Local engine restart recovery: interrupted jobs are marked failed instead of appearing to run forever.
 
 The capture milestone is an early foundation. It supports one active capture per local engine process. It does not yet perform AI highlight detection, transcription, face tracking, automatic vertical editing, clip review/export or social publishing.
 
 ## Roadmap
 1. Improve capture resilience: reconnects, segment integrity and long-stream recovery.
-2. Build real-time engine events and multi-clip job tracking.
+2. Build persistent project history and multi-clip job tracking.
 3. Add speech transcription and context-aware highlight detection.
 4. Add vertical editing, captions and face-aware reframing.
 5. Add clip review, export and official publishing integrations.
