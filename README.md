@@ -1,11 +1,11 @@
 # ViralCut AI
 
-A local-first YouTube livestream-to-short-form clipping workspace. The only video source is a YouTube Live URL; manual MP4/video uploads are intentionally not part of the product.
+A local-first YouTube livestream clipping workspace. The source is a YouTube Live URL; manual video uploads are not part of this workflow.
 
 ## Product principles
-- Real processing state only. No fake AI activity, fabricated progress or invented analytics.
+- Real processing state only; no fabricated progress or analytics.
 - Capture and heavy media processing run on the user's computer, not in a serverless web function.
-- Clips are reviewed and approved before publishing by default.
+- Clips are reviewed before publishing by default.
 - Only process streams you are authorized to record, edit and publish.
 
 ## Stack
@@ -13,41 +13,40 @@ A local-first YouTube livestream-to-short-form clipping workspace. The only vide
 - Python + FastAPI — local processing agent in `engine/`
 - yt-dlp — inspect and resolve active YouTube livestreams
 - FFmpeg — record rolling 30-second MP4 segments
-- SQLite — local capture-job metadata\n- faster-whisper — optional local CPU speech transcription and transparent candidate ranking
+- SQLite — local capture-job metadata and events
+- faster-whisper — optional local CPU transcription and candidate ranking
+
+## Windows Desktop
+See [desktop/README.md](desktop/README.md). Run `desktop/INSTALL-ViralCut.bat` once, then use the **ViralCut Desktop** shortcut. The launcher starts the local engine and opens the hosted dashboard in an app-style browser window. This first desktop release is a launcher, not yet a self-contained signed EXE.
 
 ## Run the web workspace
-
-    npm install
-    npm run dev
-
+```bash
+npm install
+npm run dev
+```
 Open http://localhost:3000.
 
-## Run the local engine
-See `engine/README.md`. The engine runs on 127.0.0.1:8765 and exposes a health endpoint, capture-job creation, status polling and stop requests. Install Python 3.10+, yt-dlp and FFmpeg first. `engine/setup-windows.bat` also installs faster-whisper; its base model downloads on first analysis.
+## Run the local engine manually
+See `engine/README.md`. The engine listens only on `127.0.0.1:8765`. Install Python 3.10+, FFmpeg, then run `engine/setup-windows.bat` and `engine/start-windows.bat`.
 
-For a deployed website, configure the exact website origin using VIRALCUT_ALLOWED_ORIGINS as described in engine/README.md. Do not expose the local engine to the public internet.
+For the deployed dashboard, the Windows launcher configures the exact allowed Vercel origins. Do not expose the local engine to the public internet.
 
 ## Current implementation
 - Responsive creator dashboard and navigation.
-- YouTube URL format validation in the web UI.
-- Browser-to-local-engine health check.
+- YouTube URL format validation and browser-to-local-engine health check.
 - Local API to inspect an active livestream, resolve media through yt-dlp and record 30-second FFmpeg segments.
-- Capture status polling and stop request from the dashboard.
-- Persistent activity timeline with stream checks, capture start, reconnect attempts and safely closed segment events.
-- Downloadable 30-second source segments and local project history.
-- Data-driven Projects, Clip Library (source segments), and local engine Settings pages.
-- Persistent activity timeline for stream checks, recording, reconnects and saved segments.
-- Download links for safely closed 30-second capture segments.
-- Automatic reconnect attempts (up to five) after stream interruptions, with a fresh yt-dlp media URL resolution.
-- Local engine restart recovery: interrupted jobs are marked failed instead of appearing to run forever.
+- Capture status polling, stop requests, persistent activity timeline and local project history.
+- Download links for safely closed source segments.
+- Automatic reconnect attempts (up to five), with fresh media URL resolution.
+- Local engine restart recovery.
+- Optional local speech transcription and basic candidate ranking using faster-whisper.
 
-The capture milestone is an early foundation. It supports one active capture per local engine process. It does not yet perform AI highlight detection, transcription, face tracking, automatic vertical editing, clip review/export or social publishing.
+The current milestone is the capture and basic analysis foundation. It supports one active capture per local engine process. It does not yet provide advanced semantic highlight selection, automatic face-aware 9:16 editing, polished captions, final clip rendering/export or social publishing.
 
 ## Roadmap
-1. Improve capture resilience: reconnects, segment integrity and long-stream recovery.
-2. Build persistent project history and multi-clip job tracking.
-3. Add speech transcription and context-aware highlight detection.
-4. Add vertical editing, captions and face-aware reframing.
-5. Add clip review, export and official publishing integrations.
+1. Harden local desktop pairing and capture reliability.
+2. Build context-aware highlight detection.
+3. Add vertical editing, captions and face-aware reframing.
+4. Add clip review, final export and official publishing integrations.
 
-A public YouTube URL does not grant copyright or platform permission. You are responsible for obtaining the necessary rights and following platform terms.
+A public YouTube URL does not grant copyright or platform permission. You are responsible for obtaining necessary rights and following platform terms.
