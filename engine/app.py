@@ -201,11 +201,17 @@ def stream_is_live(ytdlp: str, url: str, stop_event: threading.Event, job_id: st
     return info.get("is_live") is True or info.get("live_status") == "is_live", None
 
 
-def list_segment_files(output_dir: Path) -> list[Path]:
+def list_segment_files(output_dir: Path, min_age_seconds: float = 0) -> list[Path]:
     if not output_dir.exists():
         return []
+    now = time.time()
     return sorted(
-        (path for path in output_dir.rglob("*.mp4") if path.is_file() and path.stat().st_size > 0),
+        (
+            path for path in output_dir.rglob("*.mp4")
+            if path.is_file()
+            and path.stat().st_size > 0
+            and now - path.stat().st_mtime >= min_age_seconds
+        ),
         key=lambda path: path.stat().st_mtime,
     )
 
@@ -266,6 +272,7 @@ def capture_worker(job_id: str, url: str, output_dir: Path) -> None:
                 "-loglevel", "warning",
                 "-reconnect", "1",
                 "-reconnect_streamed", "1",
+                "-reconnect_at_eof", "1",
                 "-reconnect_delay_max", "10",
                 "-rw_timeout", "20000000",
                 "-i", media_url,
@@ -281,15 +288,30 @@ def capture_worker(job_id: str, url: str, output_dir: Path) -> None:
             ]
             emit_event(job_id, "capture_started", "Stream resolved. FFmpeg is recording 30-second segments.")
             update_job(job_id, "capturing", message="Recording livestream into 30-second segments.")
+            log_path = attempt_dir / "ffmpeg.log"
             with LOCK:
                 if stop_event.is_set():
                     update_job(job_id, "stopped", message="Capture stopped by the user.")
                     return
-                process = subprocess.Popen(command, stdout=subprocess.DEVNULL, stderr=subprocess.PIPE, text=True)
-                PROCESSES[job_id] = process
-            _, stderr = process.communicate()
+                with log_path.open("w", encoding="utf-8", errors="replace") as log_file:
+                    process = subprocess.Popen(command, stdout=subprocess.DEVNULL, stderr=log_file, text=True)
+                    PROCESSES[job_id] = process
+            last_reported_count = len(list_segment_files(output_dir, min_age_seconds=2))
+            while process.poll() is None:
+                if stop_event.is_set() and process.poll() is None:
+                    try:
+                        process.terminate()
+                    except OSError:
+                        pass
+                current_count = len(list_segment_files(output_dir, min_age_seconds=2))
+                if current_count > last_reported_count:
+                    last_reported_count = current_count
+                    emit_event(job_id, "segments_saved", str(current_count) + " recording segments have been safely closed and saved.")
+                time.sleep(1)
+            process.wait()
             with LOCK:
                 PROCESSES.pop(job_id, None)
+            stderr = log_path.read_text(encoding="utf-8", errors="replace") if log_path.exists() else ""
             current_segments = list_segment_files(output_dir)
             successful_segments = len(current_segments)
             if stop_event.is_set():
@@ -442,7 +464,7 @@ def get_segments(job_id: str) -> dict[str, Any]:
     if not row:
         raise HTTPException(status_code=404, detail="Job not found.")
     output_dir = Path(row["output_dir"]).resolve()
-    files = list_segment_files(output_dir)
+    files = list_segment_files(output_dir, min_age_seconds=2)
     return {
         "segments": [
             {
