@@ -139,6 +139,13 @@ async function waitForEngine() {
 }
 
 async function startEngine(engine) {
+  try {
+    const existing = await fetch(ENGINE_HEALTH, { signal: AbortSignal.timeout(2000) });
+    if (existing.ok) {
+      const body = await existing.json();
+      if (body.status === "ok" && body.tools.ffmpeg && body.tools.yt_dlp) return;
+    }
+  } catch {}
   const logPath = path.join(app.getPath("userData"), "viralcut-engine.log");
   logStream = fs.createWriteStream(logPath, { flags: "a" });
   const env = {
