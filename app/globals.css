@@ -5,3 +5,5 @@
 .engine-head .online{color:#26966e}.engine-head .offline{color:#a18a5c}
 
 .job-banner{margin-top:14px;padding:13px 15px;border:1px solid #e6e8ef;background:#fff;border-radius:8px;display:flex;align-items:center;gap:12px;box-shadow:0 1px 2px #14182308}.job-banner>div{display:flex;align-items:center;gap:9px;flex:1}.job-banner b{font-size:10px}.job-banner p{font-size:9px;color:#b34e4e;margin:0;flex:1}.job-state{font-size:9px;text-transform:capitalize;padding:4px 7px;border-radius:4px;background:#f0f1ff;color:#5b63d8}.job-state.capturing{background:#eaf7f1;color:#23875f}.job-state.failed{background:#fff0f0;color:#b94c4c}.job-state.completed,.job-state.stopped{background:#f0f2f4;color:#68717d}.job-banner button{border:1px solid #eadede;background:#fff;color:#b34e4e;border-radius:5px;padding:6px 9px;font-size:9px;font-weight:600}.primary:disabled{opacity:.65;cursor:wait}
+
+.system i:not(.system-ready){background:#c4a15c}.system .system-ready{background:#25a775}
