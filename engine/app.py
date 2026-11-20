@@ -234,10 +234,7 @@ def capture_worker(job_id: str, url: str, output_dir: Path) -> None:
                 update_job(job_id, "stopped", message="Capture stopped by the user.")
                 return
             if detail:
-                if successful_segments:
-                    raise RuntimeError(detail)
-                update_job(job_id, "failed", detail)
-                return
+                raise RuntimeError(detail)
             if not live:
                 if successful_segments:
                     update_job(job_id, "completed", message="Livestream ended. Captured segments are ready for processing.")
@@ -255,6 +252,9 @@ def capture_worker(job_id: str, url: str, output_dir: Path) -> None:
             if resolved.returncode != 0 or not resolved.stdout.strip():
                 last_error = (resolved.stderr or "").strip()[-500:] or "Could not resolve the live media stream."
                 raise RuntimeError(last_error)
+            if stop_event.is_set():
+                update_job(job_id, "stopped", message="Capture stopped by the user.")
+                return
             media_url = resolved.stdout.strip().splitlines()[0]
 
             attempt_dir = output_dir / ("attempt-" + str(attempt + 1).zfill(2))
@@ -281,8 +281,11 @@ def capture_worker(job_id: str, url: str, output_dir: Path) -> None:
             ]
             emit_event(job_id, "capture_started", "Stream resolved. FFmpeg is recording 30-second segments.")
             update_job(job_id, "capturing", message="Recording livestream into 30-second segments.")
-            process = subprocess.Popen(command, stdout=subprocess.DEVNULL, stderr=subprocess.PIPE, text=True)
             with LOCK:
+                if stop_event.is_set():
+                    update_job(job_id, "stopped", message="Capture stopped by the user.")
+                    return
+                process = subprocess.Popen(command, stdout=subprocess.DEVNULL, stderr=subprocess.PIPE, text=True)
                 PROCESSES[job_id] = process
             _, stderr = process.communicate()
             with LOCK:
