@@ -17,8 +17,6 @@ export default function Home() {
  const [engine,setEngine]=useState<{status:string;tools?:{yt_dlp:string|null;ffmpeg:string|null}}|null>(null);
  const [job,setJob]=useState<{id:string;status:string;error?:string|null}|null>(null);
  const [starting,setStarting]=useState(false);
- const [engineOnline,setEngineOnline]=useState(false);
- useEffect(()=>{let alive=true;const check=async()=>{try{const res=await fetch("http://127.0.0.1:8765/health",{cache:"no-store"});if(!res.ok)throw new Error("offline");if(alive)setEngineOnline(true);}catch{if(alive)setEngineOnline(false);}};check();const timer=window.setInterval(check,10000);return()=>{alive=false;window.clearInterval(timer);};},[]);
  function continueWithUrl(){ if(!url.trim()){setError("Paste a YouTube Live URL to continue.");return;} if(!validYouTubeUrl(url)){setError("Enter a valid YouTube video or live URL.");return;} setError("");setModal(true); }
  const notify=(s:string)=>setToast(s);
  useEffect(()=>{
@@ -32,6 +30,11 @@ export default function Home() {
   const refresh=async()=>{try{const r=await fetch("http://127.0.0.1:8765/api/v1/jobs/"+job.id,{cache:"no-store"});if(r.ok){const data=await r.json();if(alive)setJob(data.job);}}catch{}};
   refresh();const timer=window.setInterval(refresh,2000);return()=>{alive=false;window.clearInterval(timer);};
  },[job?.id,job?.status]);
+ async function stopCapture(){
+  if(!job?.id)return;
+  try{const r=await fetch("http://127.0.0.1:8765/api/v1/jobs/"+job.id+"/stop",{method:"POST"});const data=await r.json();if(!r.ok)throw new Error(data.detail||"Could not stop capture.");notify("Stop requested for this capture.");}
+  catch(e){notify(e instanceof Error?e.message:"Could not reach the local engine.");}
+ }
  async function startCapture(){
   if(!engine || engine.status!=="ok" || !engine.tools?.yt_dlp || !engine.tools?.ffmpeg){notify("Local engine is not ready. Start the ViralCut engine and install yt-dlp + FFmpeg.");return;}
   setStarting(true);
@@ -48,7 +51,7 @@ export default function Home() {
    <button className="workspace"><span className="workspace-logo">VC</span><span><b>Personal workspace</b><small>Free workspace</small></span><ChevronDown size={15}/></button>
    <div className="searchbox"><Search size={15}/><input value={filter} onChange={e=>setFilter(e.target.value)} placeholder="Quick find"/><kbd>⌘ K</kbd></div>
    <nav>{["WORKSPACE","CREATE","MANAGE"].map(group=><div className="navgroup" key={group}><label>{group}</label>{items.filter(i=>i.group===group && i.name.toLowerCase().includes(filter.toLowerCase())).map(i=>{const Icon=i.icon;return <button key={i.name} className={"navitem "+(page===i.name?"selected":"")} onClick={()=>setPage(i.name)}><Icon size={17}/>{i.name}{i.name==="Live clipping"&&<i className="live-dot"/>}</button>})}</div>)}</nav>
-   <div className="sidebar-bottom"><div className="engine-box"><div className="engine-head"><i/> <b>Local engine</b><span className={engineOnline?"online":"offline"}>{engineOnline?"Connected":"Offline"}</span></div><p>{engineOnline?"Your local processing engine is reachable.":"Start the local engine to inspect and capture livestreams."}</p><button onClick={()=>notify("Run the local engine: open services/local-engine, install requirements, then run uvicorn app.main:app --host 127.0.0.1 --port 8765.")}>Engine setup <ArrowUpRight size={13}/></button></div><button className="help" onClick={()=>notify("Help centre will be available in the public beta.")}><CircleHelp size={16}/> Help & support</button><div className="account"><div>A</div><span><b>Creator account</b><small>Personal plan</small></span></div></div>
+   <div className="sidebar-bottom"><div className="engine-box"><div className="engine-head"><i/> <b>Local engine</b><span className={engine?.status==="ok"?"online":"offline"}>{engine?.status==="ok"?"Connected":"Offline"}</span></div><p>{engine?.status==="ok"?"Your local processing engine is reachable.":"Start the local engine to inspect and capture livestreams."}</p><button onClick={()=>notify("Run the local engine: open services/local-engine, install requirements, then run uvicorn app.main:app --host 127.0.0.1 --port 8765.")}>Engine setup <ArrowUpRight size={13}/></button></div><button className="help" onClick={()=>notify("Help centre will be available in the public beta.")}><CircleHelp size={16}/> Help & support</button><div className="account"><div>A</div><span><b>Creator account</b><small>Personal plan</small></span></div></div>
   </aside>
   <section className="main">
    <header className="topbar"><div className="crumb">Workspace <span>/</span> <b>{page}</b></div><div className="topright"><div className="system"><i/> Workspace ready</div><button className="iconbtn" onClick={()=>notify("You're all caught up.")}><Bell size={17}/></button><div className="user">A</div></div></header>
@@ -64,6 +67,7 @@ export default function Home() {
       {error&&<div className="error"><X size={13}/>{error}</div>}
       <div className="card-foot"><span><ShieldCheck size={14}/> YouTube Live URLs only</span><span>Capture runs through your local processing engine</span><button onClick={()=>notify("Only record and publish livestreams you have permission to use. A public URL does not grant rights.")}>Usage & permissions <ArrowUpRight size={12}/></button></div>
      </div>
+     {job&&<div className="job-banner"><div><b>Capture session</b><span className={"job-state "+job.status}>{job.status}</span></div>{job.error&&<p>{job.error}</p>}{["checking","capturing","stopping"].includes(job.status)&&<button onClick={stopCapture}>Stop capture</button>}</div>}
      <div className="columns"><div className="panel"><div className="panel-head"><div><h2>Recent projects</h2><p>Your latest clipping sessions</p></div><button onClick={()=>setPage("Projects")}>View all <ArrowUpRight size={14}/></button></div><div className="empty"><div><Film size={23}/></div><b>No projects yet</b><span>Your live clipping projects will appear here.</span><button className="secondary" onClick={()=>setPage("Live clipping")}><Plus size={14}/> Create first project</button></div></div>
      <div className="panel"><div className="panel-head"><div><h2>Activity</h2><p>What's happening in your studio</p></div><Activity size={17}/></div><div className="activity-empty"><div><Zap size={16}/></div><section><b>It's quiet in here</b><span>Real processing events will appear as they happen.</span></section></div></div></div>
      <div className="workflow"><div><Sparkles size={15}/> YOUR WORKFLOW</div><section><article><i>1</i><b>Connect a stream</b><small>Paste a YouTube Live URL</small></article><hr/><article><i>2</i><b>Find the moments</b><small>AI detects highlights live</small></article><hr/><article><i>3</i><b>Review & publish</b><small>Approve clips before sharing</small></article></section></div>
