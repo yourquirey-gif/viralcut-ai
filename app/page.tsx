@@ -16,6 +16,8 @@ export default function Home() {
  const [page,setPage]=useState<Page>("Overview"),[url,setUrl]=useState(""),[error,setError]=useState(""),[modal,setModal]=useState(false),[toast,setToast]=useState(""),[filter,setFilter]=useState("");
  const [engine,setEngine]=useState<{status:string;tools?:{yt_dlp:string|null;ffmpeg:string|null}}|null>(null);
  const [job,setJob]=useState<{id:string;status:string;error?:string|null}|null>(null);
+ const [events,setEvents]=useState<{id:number;event_type:string;message:string;created_at:string}[]>([]);
+ const [segments,setSegments]=useState<{name:string;bytes:number;download_url:string}[]>([]);
  const [starting,setStarting]=useState(false);
  function continueWithUrl(){ if(!url.trim()){setError("Paste a YouTube Live URL to continue.");return;} if(!validYouTubeUrl(url)){setError("Enter a valid YouTube Live URL.");return;} setError("");setModal(true); }
  const notify=(s:string)=>setToast(s);
@@ -25,6 +27,21 @@ export default function Home() {
   const check=async()=>{try{const r=await fetch("http://127.0.0.1:8765/health",{cache:"no-store"});if(!r.ok)throw new Error("offline");const data=await r.json();if(alive)setEngine(data);}catch{if(alive)setEngine(null);}};
   check();const timer=window.setInterval(check,5000);return()=>{alive=false;window.clearInterval(timer);};
  },[]);
+ useEffect(()=>{
+  if(!job?.id)return;
+  let alive=true;
+  const refresh=async()=>{
+   try{
+    const [er,sr]=await Promise.all([
+     fetch("http://127.0.0.1:8765/api/v1/jobs/"+job.id+"/events?after_id=0",{cache:"no-store"}),
+     fetch("http://127.0.0.1:8765/api/v1/jobs/"+job.id+"/segments",{cache:"no-store"})
+    ]);
+    if(er.ok){const d=await er.json();if(alive)setEvents(d.events||[]);}
+    if(sr.ok){const d=await sr.json();if(alive)setSegments(d.segments||[]);}
+   }catch{}
+  };
+  refresh();const timer=window.setInterval(refresh,3000);return()=>{alive=false;window.clearInterval(timer);};
+ },[job?.id]);
  useEffect(()=>{
   if(!job?.id || ["completed","failed","stopped"].includes(job.status))return;
   let alive=true;
@@ -42,7 +59,7 @@ export default function Home() {
   try{
    const r=await fetch("http://127.0.0.1:8765/api/v1/jobs",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({url})});
    const data=await r.json();if(!r.ok)throw new Error(data.detail||"Could not start capture.");
-   setJob(data.job);setModal(false);notify("Capture job created. Checking the live stream…");
+   setJob(data.job);setEvents([]);setSegments([]);setModal(false);notify("Capture job created. Checking the live stream…");
   }catch(e){notify(e instanceof Error?e.message:"Could not connect to the local engine.");}
   finally{setStarting(false);}
  }
@@ -68,9 +85,10 @@ export default function Home() {
       {error&&<div className="error"><X size={13}/>{error}</div>}
       <div className="card-foot"><span><ShieldCheck size={14}/> YouTube Live URLs only</span><span>Capture runs through your local processing engine</span><button onClick={()=>notify("Only record and publish livestreams you have permission to use. A public URL does not grant rights.")}>Usage & permissions <ArrowUpRight size={12}/></button></div>
      </div>
-     {job&&<div className="job-banner"><div><b>Capture session</b><span className={"job-state "+job.status}>{job.status}</span></div>{job.error&&<p>{job.error}</p>}{job.status==="capturing"&&<button onClick={stopCapture}>Stop capture</button>}</div>}
+     {job&&<div className="job-banner"><div><b>Capture session</b><span className={"job-state "+job.status}>{job.status}</span><span className="segment-count">{segments.length} segments saved</span></div>{job.error&&<p>{job.error}</p>}{job.status==="capturing"&&<button onClick={stopCapture}>Stop capture</button>}</div>}
+     {job&&segments.length>0&&<div className="panel segment-panel"><div className="panel-head"><div><h2>Captured segments</h2><p>Raw 30-second recordings saved on this computer</p></div><span>{segments.length} files</span></div>{segments.slice(-6).reverse().map(seg=><div className="segment-row" key={seg.download_url}><span><Film size={15}/>{seg.name}</span><small>{(seg.bytes/1024/1024).toFixed(1)} MB</small><a href={"http://127.0.0.1:8765"+seg.download_url}>Download</a></div>)}</div>}
      <div className="columns"><div className="panel"><div className="panel-head"><div><h2>Recent projects</h2><p>Your latest clipping sessions</p></div><button onClick={()=>setPage("Projects")}>View all <ArrowUpRight size={14}/></button></div><div className="empty"><div><Film size={23}/></div><b>No projects yet</b><span>Your live clipping projects will appear here.</span><button className="secondary" onClick={()=>setPage("Live clipping")}><Plus size={14}/> Create first project</button></div></div>
-     <div className="panel"><div className="panel-head"><div><h2>Activity</h2><p>What's happening in your studio</p></div><Activity size={17}/></div><div className="activity-empty"><div><Zap size={16}/></div><section><b>It's quiet in here</b><span>Real processing events will appear as they happen.</span></section></div></div></div>
+     <div className="panel"><div className="panel-head"><div><h2>Activity</h2><p>Live events from the local processing engine</p></div><Activity size={17}/></div>{events.length? <div className="event-list">{events.slice(-8).reverse().map(ev=><div className="event-row" key={ev.id}><i className={ev.event_type==="reconnecting"?"event-warn":""}/><section><b>{ev.message}</b><small>{new Date(ev.created_at).toLocaleTimeString()}</small></section></div>)}</div>:<div className="activity-empty"><div><Zap size={16}/></div><section><b>No engine events yet</b><span>Start a capture to see real connection and recording events here.</span></section></div>}</div></div>
      <div className="workflow"><div><Sparkles size={15}/> PLANNED WORKFLOW</div><section><article><i>1</i><b>Connect a stream</b><small>Paste a YouTube Live URL</small></article><hr/><article><i>2</i><b>Find the moments</b><small>AI highlight analysis</small></article><hr/><article><i>3</i><b>Review & publish</b><small>Approve clips before sharing</small></article></section></div>
     </>:<div className="placeholder"><div><WandSparkles size={22}/></div><h2>{page==="Settings"?"Make ViralCut yours":"Your "+page.toLowerCase()+" will live here"}</h2><p>{page==="Settings"?"Preferences, connected accounts, engine settings and publishing defaults will be organised here.":"This space will populate when you create and process your first live project."}</p><small>FOUNDATION IN PROGRESS</small></div>}
    </div>
