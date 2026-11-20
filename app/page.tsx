@@ -19,7 +19,8 @@ export default function Home() {
  const [events,setEvents]=useState<{id:number;event_type:string;message:string;created_at:string}[]>([]);
  const [segments,setSegments]=useState<{name:string;bytes:number;download_url:string}[]>([]);
  const [recentJobs,setRecentJobs]=useState<{id:string;status:string;created_at:string;updated_at:string;error?:string|null}[]>([]);
- const [starting,setStarting]=useState(false);\n const [analysis,setAnalysis]=useState<{status:string;error?:string|null;result?:{notice?:string;highlights?:{rank:number;score:number;source_segment:string;transcript:string;language?:string;word_count:number}[]}|null}|null>(null);
+ const [starting,setStarting]=useState(false);
+ const [analysis,setAnalysis]=useState<{status:string;error?:string|null;result?:{notice?:string;highlights?:{rank:number;score:number;source_segment:string;transcript:string;language?:string;word_count:number}[]}|null}|null>(null);
  function continueWithUrl(){ if(!url.trim()){setError("Paste a YouTube Live URL to continue.");return;} if(!validYouTubeUrl(url)){setError("Enter a valid YouTube Live URL.");return;} setError("");setModal(true); }
  const notify=(s:string)=>setToast(s);
  const engineReady=!!engine&&engine.status==="ok"&&!!engine.tools?.yt_dlp&&!!engine.tools?.ffmpeg;
