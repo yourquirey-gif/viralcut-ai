@@ -19,7 +19,7 @@ export default function Home() {
  const [events,setEvents]=useState<{id:number;event_type:string;message:string;created_at:string}[]>([]);
  const [segments,setSegments]=useState<{name:string;bytes:number;download_url:string}[]>([]);
  const [recentJobs,setRecentJobs]=useState<{id:string;status:string;created_at:string;updated_at:string;error?:string|null}[]>([]);
- const [starting,setStarting]=useState(false);
+ const [starting,setStarting]=useState(false);\n const [analysis,setAnalysis]=useState<{status:string;error?:string|null;result?:{notice?:string;highlights?:{rank:number;score:number;source_segment:string;transcript:string;language?:string;word_count:number}[]}|null}|null>(null);
  function continueWithUrl(){ if(!url.trim()){setError("Paste a YouTube Live URL to continue.");return;} if(!validYouTubeUrl(url)){setError("Enter a valid YouTube Live URL.");return;} setError("");setModal(true); }
  const notify=(s:string)=>setToast(s);
  const engineReady=!!engine&&engine.status==="ok"&&!!engine.tools?.yt_dlp&&!!engine.tools?.ffmpeg;
@@ -55,6 +55,20 @@ export default function Home() {
   const refresh=async()=>{try{const r=await fetch("http://127.0.0.1:8765/api/v1/jobs/"+job.id,{cache:"no-store"});if(r.ok){const data=await r.json();if(alive)setJob(data.job);}}catch{}};
   refresh();const timer=window.setInterval(refresh,2000);return()=>{alive=false;window.clearInterval(timer);};
  },[job?.id,job?.status]);
+ async function startAIAnalysis(){
+  if(!job?.id)return;
+  try{
+   const r=await fetch("http://127.0.0.1:8765/api/v1/jobs/"+job.id+"/analyze",{method:"POST"});
+   const data=await r.json();if(!r.ok)throw new Error(data.detail||"Could not start AI analysis.");
+   setAnalysis({status:"queued"});notify("AI transcription queued on this computer.");
+  }catch(e){notify(e instanceof Error?e.message:"Could not start AI analysis.");}
+ }
+ useEffect(()=>{
+  if(!job?.id||!analysis||!["queued","processing"].includes(analysis.status))return;
+  let alive=true;
+  const refresh=async()=>{try{const r=await fetch("http://127.0.0.1:8765/api/v1/jobs/"+job.id+"/analysis",{cache:"no-store"});if(r.ok){const data=await r.json();if(alive)setAnalysis(data);}}catch{}};
+  refresh();const timer=window.setInterval(refresh,3000);return()=>{alive=false;window.clearInterval(timer);};
+ },[job?.id,analysis?.status]);
  async function stopCapture(){
   if(!job?.id)return;
   try{const r=await fetch("http://127.0.0.1:8765/api/v1/jobs/"+job.id+"/stop",{method:"POST"});const data=await r.json();if(!r.ok)throw new Error(data.detail||"Could not stop capture.");notify("Stop requested for this capture.");}
@@ -66,7 +80,7 @@ export default function Home() {
   try{
    const r=await fetch("http://127.0.0.1:8765/api/v1/jobs",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({url})});
    const data=await r.json();if(!r.ok)throw new Error(data.detail||"Could not start capture.");
-   setJob(data.job);setEvents([]);setSegments([]);setModal(false);notify("Capture job created. Checking the live stream…");
+   setJob(data.job);setEvents([]);setSegments([]);setAnalysis(null);setModal(false);notify("Capture job created. Checking the live stream…");
   }catch(e){notify(e instanceof Error?e.message:"Could not connect to the local engine.");}
   finally{setStarting(false);}
  }
@@ -93,6 +107,12 @@ export default function Home() {
       <div className="card-foot"><span><ShieldCheck size={14}/> YouTube Live URLs only</span><span>Capture runs through your local processing engine</span><button onClick={()=>notify("Only record and publish livestreams you have permission to use. A public URL does not grant rights.")}>Usage & permissions <ArrowUpRight size={12}/></button></div>
      </div>
      {job&&<div className="job-banner"><div><b>Capture session</b><span className={"job-state "+job.status}>{job.status}</span><span className="segment-count">{segments.length} segments saved</span></div>{job.error&&<p>{job.error}</p>}{job.status==="capturing"&&<button onClick={stopCapture}>Stop capture</button>}</div>}
+     {job&&segments.length>0&&<div className="panel page-panel"><div className="panel-head"><div><h2>AI transcript & highlight candidates</h2><p>Local Whisper transcription with transparent baseline ranking</p></div><button className="primary" onClick={startAIAnalysis} disabled={analysis?.status==="queued"||analysis?.status==="processing"}>{analysis?.status==="processing"||analysis?.status==="queued"?"Analyzing…":"Analyze segments"} <WandSparkles size={14}/></button></div>
+      {analysis?.status==="queued"||analysis?.status==="processing"?<div className="activity-empty"><div><Zap size={16}/></div><section><b>Local AI analysis running</b><span>Audio is being transcribed on this computer. The first run may download the Whisper model.</span></section></div>:null}
+      {analysis?.status==="failed"&&<div className="error">{analysis.error||"AI analysis failed."}</div>}
+      {analysis?.status==="completed"&&analysis.result&&<><p className="muted">{analysis.result.notice}</p>{(analysis.result.highlights||[]).slice(0,8).map(item=><div className="project-row" key={item.source_segment}><span className="project-icon">#{item.rank}</span><section><b>{item.source_segment} · Score {item.score}/100</b><small>{item.language||"Language unknown"} · {item.word_count} words</small><small>{item.transcript||"No speech detected"}</small></section></div>)}</>}
+      {!analysis&&<div className="activity-empty"><div><Sparkles size={16}/></div><section><b>Ready to analyze</b><span>Transcribe captured segments and rank speech-rich moments. This first score is not a virality prediction.</span></section></div>}
+     </div>}
      {job&&segments.length>0&&<div className="panel segment-panel"><div className="panel-head"><div><h2>Captured segments</h2><p>Raw 30-second recordings saved on this computer</p></div><span>{segments.length} files</span></div>{segments.slice(-6).reverse().map(seg=><div className="segment-row" key={seg.download_url}><span><Film size={15}/>{seg.name}</span><small>{(seg.bytes/1024/1024).toFixed(1)} MB</small><a href={"http://127.0.0.1:8765"+seg.download_url}>Download</a></div>)}</div>}
      <div className="columns"><div className="panel"><div className="panel-head"><div><h2>Recent projects</h2><p>Your latest clipping sessions</p></div><button onClick={()=>setPage("Projects")}>View all <ArrowUpRight size={14}/></button></div>{recentJobs.length? <div className="project-list">{recentJobs.slice(0,5).map(item=><div className="project-row" key={item.id}><span className="project-icon"><Radio size={15}/></span><section><b>YouTube Live capture</b><small>{new Date(item.created_at).toLocaleString()}</small></section><span className={"job-state "+item.status}>{item.status}</span><button onClick={()=>{setJob(item);setPage("Live clipping");}}>Open <ArrowUpRight size={13}/></button></div>)}</div>:<div className="empty"><div><Film size={23}/></div><b>No projects yet</b><span>Connect the local engine and create your first live capture.</span><button className="secondary" onClick={()=>setPage("Live clipping")}><Plus size={14}/> Create first project</button></div>}</div>
      <div className="panel"><div className="panel-head"><div><h2>Activity</h2><p>Live events from the local processing engine</p></div><Activity size={17}/></div>{events.length? <div className="event-list">{events.slice(-8).reverse().map(ev=><div className="event-row" key={ev.id}><i className={ev.event_type==="reconnecting"?"event-warn":""}/><section><b>{ev.message}</b><small>{new Date(ev.created_at).toLocaleTimeString()}</small></section></div>)}</div>:<div className="activity-empty"><div><Zap size={16}/></div><section><b>No engine events yet</b><span>Start a capture to see real connection and recording events here.</span></section></div>}</div></div>
