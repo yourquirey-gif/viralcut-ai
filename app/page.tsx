@@ -9,7 +9,7 @@ const items: {name:Page; icon:typeof LayoutDashboard; group:string}[] = [
  {name:"Publishing",icon:UploadCloud,group:"MANAGE"},{name:"Settings",icon:Settings2,group:"MANAGE"}
 ];
 function validYouTubeUrl(value:string) {
- try { const u=new URL(value.trim()); const host=u.hostname.toLowerCase().replace(/^www\\./,"").replace(/^m\\./,"");
+ try { const u=new URL(value.trim()); const host=u.hostname.toLowerCase().replace(/^www\./,"").replace(/^m\./,"");
  return host==="youtu.be" ? u.pathname.length>1 : host==="youtube.com" && (u.pathname==="/watch" || u.pathname.startsWith("/live/") || u.pathname.startsWith("/embed/")); } catch { return false; }
 }
 export default function Home() {
