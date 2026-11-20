@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Activity, ArrowUpRight, Bell, Check, ChevronDown, CircleHelp, Clapperboard, Clock3, Film, FolderOpen, LayoutDashboard, Link2, Plus, Radio, Search, Settings2, ShieldCheck, Sparkles, UploadCloud, WandSparkles, X, Zap } from "lucide-react";
 
 type Page = "Overview" | "Projects" | "Live clipping" | "Clip library" | "Publishing" | "Settings";
@@ -14,6 +14,8 @@ function validYouTubeUrl(value:string) {
 }
 export default function Home() {
  const [page,setPage]=useState<Page>("Overview"),[url,setUrl]=useState(""),[error,setError]=useState(""),[modal,setModal]=useState(false),[toast,setToast]=useState(""),[filter,setFilter]=useState("");
+ const [engineOnline,setEngineOnline]=useState(false);
+ useEffect(()=>{let alive=true;const check=async()=>{try{const res=await fetch("http://127.0.0.1:8765/health",{cache:"no-store"});if(!res.ok)throw new Error("offline");if(alive)setEngineOnline(true);}catch{if(alive)setEngineOnline(false);}};check();const timer=window.setInterval(check,10000);return()=>{alive=false;window.clearInterval(timer);};},[]);
  function continueWithUrl(){ if(!url.trim()){setError("Paste a YouTube Live URL to continue.");return;} if(!validYouTubeUrl(url)){setError("Enter a valid YouTube video or live URL.");return;} setError("");setModal(true); }
  const notify=(s:string)=>setToast(s);
  return <main className="shell">
@@ -22,10 +24,10 @@ export default function Home() {
    <button className="workspace"><span className="workspace-logo">VC</span><span><b>Personal workspace</b><small>Free workspace</small></span><ChevronDown size={15}/></button>
    <div className="searchbox"><Search size={15}/><input value={filter} onChange={e=>setFilter(e.target.value)} placeholder="Quick find"/><kbd>⌘ K</kbd></div>
    <nav>{["WORKSPACE","CREATE","MANAGE"].map(group=><div className="navgroup" key={group}><label>{group}</label>{items.filter(i=>i.group===group && i.name.toLowerCase().includes(filter.toLowerCase())).map(i=>{const Icon=i.icon;return <button key={i.name} className={"navitem "+(page===i.name?"selected":"")} onClick={()=>setPage(i.name)}><Icon size={17}/>{i.name}{i.name==="Live clipping"&&<i className="live-dot"/>}</button>})}</div>)}</nav>
-   <div className="sidebar-bottom"><div className="engine-box"><div className="engine-head"><i/> <b>Local engine</b><span>Offline</span></div><p>Connect your desktop engine to capture and process streams.</p><button onClick={()=>notify("The local processing agent will be added in the next milestone.")}>Engine setup <ArrowUpRight size={13}/></button></div><button className="help" onClick={()=>notify("Help centre will be available in the public beta.")}><CircleHelp size={16}/> Help & support</button><div className="account"><div>A</div><span><b>Creator account</b><small>Personal plan</small></span></div></div>
+   <div className="sidebar-bottom"><div className="engine-box"><div className="engine-head"><i/> <b>Local engine</b><span className={engineOnline?"online":"offline"}>{engineOnline?"Connected":"Offline"}</span></div><p>{engineOnline?"Your local processing engine is reachable.":"Start the local engine to inspect and capture livestreams."}</p><button onClick={()=>notify("Run the local engine: open services/local-engine, install requirements, then run uvicorn app.main:app --host 127.0.0.1 --port 8765.")}>Engine setup <ArrowUpRight size={13}/></button></div><button className="help" onClick={()=>notify("Help centre will be available in the public beta.")}><CircleHelp size={16}/> Help & support</button><div className="account"><div>A</div><span><b>Creator account</b><small>Personal plan</small></span></div></div>
   </aside>
   <section className="main">
-   <header className="topbar"><div className="crumb">Workspace <span>/</span> <b>{page}</b></div><div className="topright"><div className="system"><i/> All systems normal</div><button className="iconbtn" onClick={()=>notify("You're all caught up.")}><Bell size={17}/></button><div className="user">A</div></div></header>
+   <header className="topbar"><div className="crumb">Workspace <span>/</span> <b>{page}</b></div><div className="topright"><div className="system"><i/> Workspace ready</div><button className="iconbtn" onClick={()=>notify("You're all caught up.")}><Bell size={17}/></button><div className="user">A</div></div></header>
    <div className="content">
     <div className="welcome"><div><label>THURSDAY, NOVEMBER 20, 2026</label><h1>{page==="Overview"?"Your studio, at a glance.":page}</h1><p>{page==="Overview"?"Bring a livestream. Leave with moments worth sharing.":"Your "+page.toLowerCase()+" workspace."}</p></div><button className="primary" onClick={()=>setPage("Live clipping")}><Plus size={16}/> New live project</button></div>
     {page==="Overview"&&<>
