@@ -12,7 +12,7 @@ Requirements
 Install and run
 ---------------
 
-On Windows 10/11, first install Python 3.10+ and FFmpeg, then double-click setup-windows.bat once. After setup, use start-windows.bat whenever you want to run the local engine.
+On Windows 10/11, first install Python 3.10+ and FFmpeg, then double-click setup-windows.bat once. After setup, use start-windows.bat whenever you want to run the local engine. The Windows launcher allows the stable ViralCut Vercel domain to connect to localhost.
 
 Manual setup:
 
@@ -26,7 +26,7 @@ FFmpeg must also be installed separately and its bin folder added to PATH. Confi
 
 Health check: http://127.0.0.1:8765/health
 
-For a deployed web dashboard, add its exact origin to the local engine allowlist before opening the site. PowerShell example:
+For a different deployed preview domain, add its exact origin to the local engine allowlist before opening the site. The launcher already allows https://viralcut-ai-ayuddys-projects.vercel.app. PowerShell example:
 
     $env:VIRALCUT_ALLOWED_ORIGINS = "https://your-site.example"
     python -m uvicorn app:app --host 127.0.0.1 --port 8765
