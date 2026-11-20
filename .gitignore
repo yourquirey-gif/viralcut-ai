@@ -1,0 +1,19 @@
+node_modules/
+.next/
+out/
+.env*
+!.env.example
+.DS_Store
+*.log
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+
+# Local media and job state
+storage/
+*.sqlite3
+*.db
