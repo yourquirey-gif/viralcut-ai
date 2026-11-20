@@ -7,7 +7,7 @@ Requirements
 ------------
 - Python 3.10+ (Windows 10/11 is the primary target for this first engine build)
 - FFmpeg available on PATH
-- yt-dlp available on PATH
+- yt-dlp available on PATH\n- faster-whisper (installed by setup-windows.bat from requirements.txt; first analysis downloads the selected Whisper model)
 
 Install and run
 ---------------
@@ -42,7 +42,7 @@ API
 - POST /api/v1/jobs/{id}/stop — request capture stop.
 - GET /api/v1/jobs/{id}/events — read real engine activity events.
 - GET /api/v1/jobs/{id}/segments — list safely closed MP4 segments.
-- GET /api/v1/jobs/{id}/segments/{path} — download a captured segment.
+- GET /api/v1/jobs/{id}/segments/{path} — download a captured segment.\n- POST /api/v1/jobs/{id}/analyze — queue local CPU transcription and candidate ranking.\n- GET /api/v1/jobs/{id}/analysis — read AI analysis status, transcript and ranked segments.
 
 Capture writes 30-second MP4 segments under engine/data/segments/. Job metadata and activity events are stored in SQLite. The engine attempts to reconnect up to five times after a dropped stream, re-resolving the live media URL for each retry. It reports completed segments as they are closed. This first version supports one active capture per local engine process.
 
