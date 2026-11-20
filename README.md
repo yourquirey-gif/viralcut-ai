@@ -17,7 +17,7 @@ A local-first YouTube livestream clipping workspace. The source is a YouTube Liv
 - faster-whisper — optional local CPU transcription and candidate ranking
 
 ## Windows Desktop
-See [desktop/README.md](desktop/README.md). Run `desktop/INSTALL-ViralCut.bat` once, then use the **ViralCut Desktop** shortcut. The launcher starts the local engine and opens the hosted dashboard in an app-style browser window. This first desktop release is a launcher, not yet a self-contained signed EXE.
+See [desktop/README.md](desktop/README.md) and [desktop-app/README.md](desktop-app/README.md). A native Windows x64 installer is built by the GitHub Actions workflow `Build Windows Desktop Installer`; the source-based Edge/Chrome launcher remains available as a fallback.
 
 ## Run the web workspace
 ```bash
