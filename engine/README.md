@@ -5,7 +5,7 @@ The local engine captures livestream media on the user's computer. Heavy media p
 
 Requirements
 ------------
-- Python 3.10+
+- Python 3.10+ (Windows 10/11 is the primary target for this first engine build)
 - FFmpeg available on PATH
 - yt-dlp available on PATH
 
@@ -38,6 +38,8 @@ API
 - POST /api/v1/jobs/{id}/stop — request capture stop.
 
 Capture writes 30-second MP4 segments under engine/data/segments/. Job metadata is stored in SQLite. This first version supports one active capture per local engine process.
+
+Windows 7/8.1 compatibility is not included in this first engine build. It needs a separately pinned legacy runtime and will have reduced support; these operating systems are also out of security support. Do not assume this current Python 3.10+ setup will run on Windows 7.
 
 Important
 ---------
