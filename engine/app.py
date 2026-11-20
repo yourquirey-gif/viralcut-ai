@@ -25,7 +25,7 @@ DATA_DIR.mkdir(parents=True, exist_ok=True)
 SEGMENTS_DIR.mkdir(parents=True, exist_ok=True)
 
 app = FastAPI(title="ViralCut Local Engine", version="0.1.0")
-app.add_middleware(CORSMiddleware, allow_origins=["http://localhost:3000", "http://127.0.0.1:3000"], allow_credentials=False, allow_methods=["GET", "POST"], allow_headers=["Content-Type"])
+ALLOWED_ORIGINS = ["http://localhost:3000", "http://127.0.0.1:3000"] + [origin.strip() for origin in os.environ.get("VIRALCUT_ALLOWED_ORIGINS", "").split(",") if origin.strip()]\napp.add_middleware(CORSMiddleware, allow_origins=ALLOWED_ORIGINS, allow_credentials=False, allow_methods=["GET", "POST"], allow_headers=["Content-Type"])
 JOBS: dict[str, dict[str, Any]] = {}
 PROCESSES: dict[str, subprocess.Popen] = {}
 LOCK = threading.RLock()
@@ -146,7 +146,7 @@ def health() -> dict[str, Any]:
 @app.get("/api/v1/jobs")
 def list_jobs() -> dict[str, Any]:
     with db() as conn:
-        rows = conn.execute("SELECT id,status,created_at,updated_at,output_dir,error FROM jobs ORDER BY created_at DESC LIMIT 50").fetchall()
+        rows = conn.execute("SELECT id,status,created_at,updated_at,error FROM jobs ORDER BY created_at DESC LIMIT 50").fetchall()
     return {"jobs": [dict(row) for row in rows]}
 
 
