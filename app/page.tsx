@@ -24,11 +24,11 @@ export default function Home() {
  const notify=(s:string)=>setToast(s);
  const engineReady=!!engine&&engine.status==="ok"&&!!engine.tools?.yt_dlp&&!!engine.tools?.ffmpeg;
  useEffect(()=>{
-  if(!engineReady){setRecentJobs([]);return;}
+  if(engine?.status!=="ok"){setRecentJobs([]);return;}
   let alive=true;
   const refresh=async()=>{try{const r=await fetch("http://127.0.0.1:8765/api/v1/jobs",{cache:"no-store"});if(r.ok){const d=await r.json();if(alive)setRecentJobs(d.jobs||[]);}}catch{}};
   refresh();const timer=window.setInterval(refresh,5000);return()=>{alive=false;window.clearInterval(timer);};
- },[engineReady]);
+ },[engine?.status]);
  useEffect(()=>{
   let alive=true;
   const check=async()=>{try{const r=await fetch("http://127.0.0.1:8765/health",{cache:"no-store"});if(!r.ok)throw new Error("offline");const data=await r.json();if(alive)setEngine(data);}catch{if(alive)setEngine(null);}};
