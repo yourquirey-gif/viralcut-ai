@@ -12,3 +12,17 @@
 
 .page-panel{padding:17px 19px;min-height:250px}.project-list{padding:0 16px 10px}.project-row{display:flex;align-items:center;gap:11px;padding:12px 0;border-top:1px solid #f0f1f3}.project-icon{height:31px;width:31px;border-radius:7px;background:#f0f1ff;color:#5b63d8;display:grid;place-items:center;flex:none}.project-row section{display:grid;gap:4px;flex:1;min-width:0}.project-row section b{font-size:10px;color:#505864}.project-row section small{font-size:9px;color:#9aa0a9}.project-row>button{border:0;background:none;color:#5b63d8;font-size:9px;font-weight:600;display:flex;align-items:center;gap:4px}.setting-row{display:flex;align-items:center;justify-content:space-between;gap:15px;padding:13px 2px;border-top:1px solid #f0f1f3;font-size:10px}.setting-row b{color:#5c6470}.setting-row span{color:#8b929d;text-align:right;overflow-wrap:anywhere}
 @media(max-width:700px){.project-row{gap:7px}.project-row section b{font-size:9px}.project-row section small{font-size:8px}.project-row .job-state{font-size:8px}.project-row>button{font-size:8px}.page-panel{padding:12px}.setting-row{font-size:9px}}
+
+@media(max-width:700px){
+ .sidebar{inset:auto 0 0;width:100%;height:66px;padding:5px 7px;display:flex;flex-direction:row;align-items:center;border-right:0;border-top:1px solid var(--line);box-shadow:0 -5px 18px #14182308}
+ .brand,.workspace,.searchbox,.sidebar-bottom{display:none}
+ .sidebar nav{display:flex;align-items:center;justify-content:space-around;width:100%;height:100%;gap:2px}
+ .sidebar .navgroup{display:contents}
+ .sidebar .navgroup>label{display:none}
+ .sidebar .navitem,.sidebar .navitem:not(.selected){display:flex;flex:1;min-width:0;height:54px;margin:0;padding:4px 1px;flex-direction:column;justify-content:center;align-items:center;gap:3px;font-size:8px;border-radius:6px;white-space:nowrap}
+ .sidebar .navitem.selected{font-size:8px;background:var(--soft);color:#5058ca}
+ .sidebar .navitem svg,.sidebar .navitem.selected svg{width:17px;height:17px}
+ .sidebar .navitem .live-dot{display:none}
+ .main{margin-left:0;padding-bottom:70px}
+ .topbar{padding:0 14px}
+}
