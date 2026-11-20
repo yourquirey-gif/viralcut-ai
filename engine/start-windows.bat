@@ -13,6 +13,6 @@ if errorlevel 1 (
   exit /b 1
 )
 call .venv\Scripts\activate.bat
-set VIRALCUT_ALLOWED_ORIGINS=https://viralcut-ai-ayuddys-projects.vercel.app
+set VIRALCUT_ALLOWED_ORIGINS=https://viralcut-ai-ayuddys-projects.vercel.app,https://viralcut-ai-beta.vercel.app
 python -m uvicorn app:app --host 127.0.0.1 --port 8765
 pause
