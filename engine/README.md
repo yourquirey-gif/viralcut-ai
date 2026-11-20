@@ -40,11 +40,14 @@ API
 - GET /api/v1/jobs — list job metadata.
 - GET /api/v1/jobs/{id} — read job state.
 - POST /api/v1/jobs/{id}/stop — request capture stop.
+- GET /api/v1/jobs/{id}/events — read real engine activity events.
+- GET /api/v1/jobs/{id}/segments — list safely closed MP4 segments.
+- GET /api/v1/jobs/{id}/segments/{path} — download a captured segment.
 
-Capture writes 30-second MP4 segments under engine/data/segments/. Job metadata is stored in SQLite. This first version supports one active capture per local engine process.
+Capture writes 30-second MP4 segments under engine/data/segments/. Job metadata and activity events are stored in SQLite. The engine attempts to reconnect up to five times after a dropped stream, re-resolving the live media URL for each retry. It reports completed segments as they are closed. This first version supports one active capture per local engine process.
 
 Windows 7/8.1 compatibility is not included in this first engine build. It needs a separately pinned legacy runtime and will have reduced support; these operating systems are also out of security support. Do not assume this current Python 3.10+ setup will run on Windows 7.
 
 Important
 ---------
-This is the capture foundation, not the finished AI clipping pipeline. URL validation does not grant recording or publishing rights. YouTube restrictions, login requirements, regional availability and upstream changes can prevent capture. Keep this service bound to localhost; do not expose it to the public internet.
+This is the capture foundation, not the finished AI clipping pipeline. It does not yet perform transcription, highlight scoring, face tracking, caption generation, vertical rendering, final clip export or social publishing. URL validation does not grant recording or publishing rights. YouTube restrictions, login requirements, regional availability and upstream changes can prevent capture. Keep this service bound to localhost; do not expose it to the public internet.
