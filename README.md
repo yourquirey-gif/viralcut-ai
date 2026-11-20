@@ -33,6 +33,9 @@ For a deployed website, configure the exact website origin using VIRALCUT_ALLOWE
 - Browser-to-local-engine health check.
 - Local API to inspect an active livestream, resolve media through yt-dlp and record 30-second FFmpeg segments.
 - Capture status polling and stop request from the dashboard.
+- Persistent activity timeline with stream checks, capture start, reconnect attempts and safely closed segment events.
+- Downloadable 30-second source segments and local project history.
+- Data-driven Projects, Clip Library (source segments), and local engine Settings pages.
 - Persistent activity timeline for stream checks, recording, reconnects and saved segments.
 - Download links for safely closed 30-second capture segments.
 - Automatic reconnect attempts (up to five) after stream interruptions, with a fresh yt-dlp media URL resolution.
