@@ -518,7 +518,10 @@ def stop_job(job_id: str) -> dict[str, str]:
 
 
 # Optional local AI analysis. Heavy model work runs in a background thread.
-try:\n    from .ai_pipeline import analyze_segments\nexcept ImportError:\n    from ai_pipeline import analyze_segments
+try:
+    from .ai_pipeline import analyze_segments
+except ImportError:
+    from ai_pipeline import analyze_segments
 
 ANALYSIS_STATE: dict[str, dict[str, Any]] = {}
 ANALYSIS_LOCK = threading.RLock()
