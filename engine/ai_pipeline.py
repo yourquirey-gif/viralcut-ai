@@ -99,5 +99,5 @@ def analyze_segments(output_dir: Path, model_size: str = "base") -> dict[str, An
         "ranking_method": "transparent speech-density baseline",
         "notice": "This is an early transcript-based candidate ranking, not semantic or audience-reaction virality detection.",
         "highlights": ranked,
-        "transcript": "\\n".join(all_text),
+        "transcript": "\n".join(all_text),
     }
