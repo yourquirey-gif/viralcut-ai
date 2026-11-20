@@ -367,7 +367,10 @@ async def enforce_local_origin(request: Request, call_next):
     origin = request.headers.get("origin")
     if request.method == "POST" and origin and origin not in ALLOWED_ORIGINS:
         return JSONResponse(status_code=403, content={"detail": "This website origin is not allowed to control the local engine."})
-    return await call_next(request)
+    response = await call_next(request)
+    if request.headers.get("access-control-request-private-network") == "true":
+        response.headers["Access-Control-Allow-Private-Network"] = "true"
+    return response
 
 
 @app.get("/health")
