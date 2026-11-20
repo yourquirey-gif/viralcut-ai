@@ -1,28 +1,47 @@
-# ViralCut Desktop (Windows 10/11)
+# ViralCut Desktop for Windows 10/11
 
-ViralCut Desktop is a local-PC launcher for the ViralCut workspace. It starts the Python Local Engine on **127.0.0.1:8765** and opens the hosted dashboard in an Edge/Chrome app window when available.
+ViralCut has two Windows desktop paths:
 
-## Install
+- **Native desktop app (recommended):** built from `desktop-app/`. It opens the dashboard in its own application window and manages the local engine.
+- **Launcher fallback:** `INSTALL-ViralCut.bat` and `START-ViralCut.bat` create a desktop shortcut that opens the hosted dashboard in Edge/Chrome app mode.
 
-1. Install Python 3.10+ (Python 3.11 is recommended) and enable the Python Launcher.
-2. Download or clone the complete ViralCut repository to a folder that you will keep on this PC.
-3. Double-click `desktop/INSTALL-ViralCut.bat`.
-4. The installer checks FFmpeg, tries to install it with winget if missing, installs the Python requirements, and creates a desktop shortcut.
-5. Double-click **ViralCut Desktop** on your Windows desktop.
+## Native app installer
 
-## Daily use
+The GitHub Actions workflow builds a Windows x64 NSIS installer when desktop or engine code changes. Open the repository's **Actions → Build Windows Desktop Installer** run and download the `ViralCut-Windows-Installer` artifact. Artifacts are retained for 14 days.
 
-- Start from the **ViralCut Desktop** shortcut.
-- Keep the minimized Local Engine window running while recording or analyzing.
-- The dashboard uses the engine on this PC. The livestream capture and local AI analysis do not run on Vercel.
-- To stop the engine, close the minimized ViralCut Local Engine console window.
+To build locally, open PowerShell in `desktop-app/` and run:
 
-## Important limitations
+```powershell
+npm install
+npm run dist
+```
 
-- This is the first Windows desktop launcher, not yet a self-contained signed `.exe` installer. Python and FFmpeg are installed separately.
-- Internet is needed to open the hosted dashboard and to resolve YouTube livestreams.
-- The PC must remain powered on and connected to the internet during capture.
-- Current engine milestone supports one active capture per PC, 30-second source segments, reconnect attempts, and local speech transcription/candidate ranking.
-- Full semantic highlight selection, automatic 9:16 reframing, polished captions, final clip rendering/export, and social publishing are still under development.
-- Keep the engine bound to localhost. Never expose port 8765 to the public internet.
-- Only record and publish streams for which you have the necessary rights and permissions.
+The installer is written to `desktop-app/dist/`.
+
+## PC requirements
+
+- Windows 10/11, 64-bit
+- Python 3.11 with the Python Launcher enabled
+- FFmpeg available on PATH (the native app attempts a winget installation on first launch)
+- Internet for the hosted dashboard, YouTube access and initial package installation
+
+On first launch, the native app copies the engine into the user's Local AppData folder, creates a private Python environment, installs yt-dlp and AI packages, and starts the local API on `127.0.0.1:8765`. The Whisper model downloads only when AI analysis is started for the first time.
+
+Capture data, logs and SQLite history are stored in the user's ViralCut application-data folder, not inside Program Files. Closing the app requests active captures to stop before shutting down the engine.
+
+## Launcher fallback
+
+If you are using the source repository instead of the native installer:
+
+1. Run `INSTALL-ViralCut.bat` once.
+2. Double-click the **ViralCut Desktop** shortcut.
+3. Keep the minimized Local Engine console running during capture.
+4. Close that console to stop the launcher-based engine.
+
+## Important product limitations
+
+No paid cloud compute is used. Livestream capture and current AI analysis run on the user's PC. The PC must remain powered on and connected to the internet while capturing.
+
+The current engine milestone supports one active capture per PC, 30-second source segments, reconnect attempts, local speech transcription and basic candidate ranking. Advanced semantic highlight selection, automatic 9:16 face-aware editing, polished captions, final clip rendering/export and social publishing are still under development.
+
+Keep the engine bound to localhost. Never expose port 8765 to the public internet. Only record and publish streams for which you have the necessary rights and permissions.
