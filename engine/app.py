@@ -515,3 +515,66 @@ def stop_job(job_id: str) -> dict[str, str]:
         job["updated_at"] = utc_now()
     emit_event(job_id, "stop_requested", "Stop requested. Waiting for the capture process to close safely.")
     return {"status": "stop_requested"}
+
+
+# Optional local AI analysis. Heavy model work runs in a background thread.
+from ai_pipeline import analyze_segments
+
+ANALYSIS_STATE: dict[str, dict[str, Any]] = {}
+ANALYSIS_LOCK = threading.RLock()
+
+
+def _analysis_worker(job_id: str, output_dir: Path) -> None:
+    with ANALYSIS_LOCK:
+        ANALYSIS_STATE[job_id] = {"status": "processing", "result": None, "error": None}
+    emit_event(job_id, "ai_analysis_started", "Local speech transcription and candidate ranking started.")
+    try:
+        result = analyze_segments(output_dir, model_size=os.environ.get("VIRALCUT_WHISPER_MODEL", "base"))
+        result_path = output_dir / "ai-analysis.json"
+        result_path.write_text(json.dumps(result, ensure_ascii=False, indent=2), encoding="utf-8")
+        with ANALYSIS_LOCK:
+            ANALYSIS_STATE[job_id] = {"status": "completed", "result": result, "error": None}
+        emit_event(job_id, "ai_analysis_completed", "Speech transcription finished. Candidate ranking is ready for review.")
+    except Exception as exc:
+        message = str(exc)[:700] or "AI analysis failed."
+        with ANALYSIS_LOCK:
+            ANALYSIS_STATE[job_id] = {"status": "failed", "result": None, "error": message}
+        emit_event(job_id, "ai_analysis_failed", message)
+
+
+@app.post("/api/v1/jobs/{job_id}/analyze")
+def start_ai_analysis(job_id: str) -> dict[str, str]:
+    with db() as conn:
+        row = conn.execute("SELECT output_dir,status FROM jobs WHERE id=?", (job_id,)).fetchone()
+    if not row:
+        raise HTTPException(status_code=404, detail="Job not found.")
+    if not shutil.which("ffmpeg"):
+        raise HTTPException(status_code=503, detail="FFmpeg is required for AI audio extraction.")
+    output_dir = Path(row["output_dir"]).resolve()
+    if not output_dir.is_dir() or not list_segment_files(output_dir, min_age_seconds=2):
+        raise HTTPException(status_code=409, detail="No completed recording segments are ready to analyze.")
+    with ANALYSIS_LOCK:
+        current = ANALYSIS_STATE.get(job_id)
+        if current and current.get("status") == "processing":
+            raise HTTPException(status_code=409, detail="AI analysis is already running for this project.")
+        ANALYSIS_STATE[job_id] = {"status": "queued", "result": None, "error": None}
+    threading.Thread(target=_analysis_worker, args=(job_id, output_dir), daemon=True, name="ai-analysis-" + job_id).start()
+    return {"status": "queued", "message": "Local AI analysis queued."}
+
+
+@app.get("/api/v1/jobs/{job_id}/analysis")
+def get_ai_analysis(job_id: str) -> dict[str, Any]:
+    with db() as conn:
+        exists = conn.execute("SELECT 1 FROM jobs WHERE id=?", (job_id,)).fetchone()
+    if not exists:
+        raise HTTPException(status_code=404, detail="Job not found.")
+    with ANALYSIS_LOCK:
+        state = ANALYSIS_STATE.get(job_id)
+    if state:
+        return state
+    with db() as conn:
+        row = conn.execute("SELECT output_dir FROM jobs WHERE id=?", (job_id,)).fetchone()
+    result_path = Path(row["output_dir"]) / "ai-analysis.json"
+    if result_path.is_file():
+        return {"status": "completed", "result": json.loads(result_path.read_text(encoding="utf-8")), "error": None}
+    return {"status": "not_started", "result": None, "error": None}
